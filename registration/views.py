@@ -13,6 +13,9 @@ from django.template import RequestContext
 from registration.forms import RegistrationForm
 from registration.models import RegistrationProfile
 
+import settings
+
+REGISTER_AUTO_LOGIN = getattr(settings, 'REGISTER_AUTO_LOGIN', False)
 
 def activate(request, activation_key,
              template_name='registration/activate.html',
@@ -135,6 +138,15 @@ def register(request, success_url=None,
         form = form_class(data=request.POST, files=request.FILES)
         if form.is_valid():
             new_user = form.save()
+            
+            if REGISTER_AUTO_LOGIN:
+                from django.contrib.auth import login, authenticate
+                new_user = authenticate(
+                    username=form.cleaned_data['username'],
+                    password=form.cleaned_data['password1'])
+                login(request, new_user)
+                
+                
             # success_url needs to be dynamically generated here; setting a
             # a default value using reverse() will cause circular-import
             # problems with the default URLConf for this application, which
