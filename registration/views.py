@@ -146,7 +146,8 @@ def register(request, success_url=None,
                     password=form.cleaned_data['password1'])
                 login(request, new_user)
                 
-                
+            if not success_url and "next" in request.POST:
+                success_url  = request.POST["next"]
             # success_url needs to be dynamically generated here; setting a
             # a default value using reverse() will cause circular-import
             # problems with the default URLConf for this application, which
@@ -155,11 +156,15 @@ def register(request, success_url=None,
     else:
         form = form_class()
     
+    if "next" in request.REQUEST:
+        next = request.REQUEST["next"]
+    else:
+        next = None
     if extra_context is None:
         extra_context = {}
     context = RequestContext(request)
     for key, value in extra_context.items():
         context[key] = callable(value) and value() or value
     return render_to_response(template_name,
-                              { 'form': form },
+                              { 'form': form, 'next': next },
                               context_instance=context)
